@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Bike Rack — Sistem Parkir Rak Sepeda/Motor Pintar</title>
+<style>
+ :root{
+ --bg:#0b1220; --panel:#121c33; --panel2:#0f1830;
+ --accent:#38bdf8; --accent2:#818cf8;
+ --green:#22c55e; --red:#ef4444; --yellow:#f59e0b;
+ --text:#e6edf7; --muted:#8fa0bd; --border:#22304f;
+ }
+ *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
+ body{background:linear-gradient(160deg,#0b1220,#0e1a30
+60%,#0b1220);color:var(--text);min-height:100vh}
+ header{padding:22px 28px;display:flex;align-items:center;gap:14px;border-bottom:1px solid
+var(--border);flex-wrap:wrap}
+ 
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--acce
+nt),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px}
+ h1{font-size:20px}
+ .sub{color:var(--muted);font-size:13px}
+ .live{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+ .dot-live{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0
+8px var(--green);animation:pulse 1.6s infinite}
+ @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+ main{max-width:1200px;margin:0 auto;padding:24px;display:grid;grid-template-columns:2fr
+1fr;gap:22px}
+ @media(max-width:900px){main{grid-template-columns:1fr}}
+ .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px}
+ .card h2{font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+ 
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:12.5px;color:var(--m
+uted)}
+ .legend span{display:flex;align-items:center;gap:6px}
+ .led{width:12px;height:12px;border-radius:50%}
+ .led.g{background:var(--green);box-shadow:0 0 8px var(--green)}
+ .led.r{background:var(--red);box-shadow:0 0 8px var(--red)}
+ .led.y{background:var(--yellow);box-shadow:0 0 8px var(--yellow);animation:pulse 1s infinite}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+ .slot{background:var(--panel2);border:1px solid
+var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;transition:.2s;pos
+ition:relative}
+ .slot:hover{transform:translateY(-3px);border-color:var(--accent)} .slot .big-led{width:26px;height:26px;border-radius:50%;margin:6px auto 10px;transition:.3s}
+ .slot .name{font-weight:700;font-size:15px}
+ .slot .status{font-size:12px;color:var(--muted);margin-top:4px}
+ .status-open .big-led{background:var(--green);box-shadow:0 0 14px var(--green)}
+ .status-locked .big-led{background:var(--red);box-shadow:0 0 14px var(--red)}
+ .status-busy .big-led{background:var(--yellow);box-shadow:0 0 14px var(--yellow)}
+ .status-alarm .big-led{background:var(--red);box-shadow:0 0 18px var(--red);animation:blink
+.5s infinite}
+ @keyframes blink{50%{opacity:.15}}
+ .status-alarm{border-color:var(--red);animation:shake .4s infinite}
+ @keyframes
+shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translat
+eX(4px)}}
+ .tag{position:absolute;top:8px;right:10px;font-size:10px;color:var(--muted)}
+ 
+.btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#06101f;border:none;
+padding:11px
+16px;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;transition:.2s;width:100
+%}
+ .btn:hover{opacity:.9}
+ .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+ .btn.danger{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff}
+ .row{display:flex;gap:10px;margin-top:12px}
+ .panel-right{display:flex;flex-direction:column;gap:18px}
+ .field{width:100%;background:#0a1326;border:1px solid
+var(--border);border-radius:10px;padding:11px
+12px;color:var(--text);font-size:14px;margin-top:8px}
+ label{font-size:12.5px;color:var(--muted)}
+ 
+.log{max-height:260px;overflow-y:auto;font-size:12.5px;display:flex;flex-direction:column;gap:8
+px}
+ .log-item{background:var(--panel2);border-left:3px solid var(--accent);padding:8px
+10px;border-radius:8px;color:var(--muted)}
+ .log-item b{color:var(--text)}
+ .log-item.alarm{border-left-color:var(--red)}
+ .log-item.ok{border-left-color:var(--green)}
+ /* Modal */
+ 
+.modal-bg{position:fixed;inset:0;background:rgba(3,7,17,.8);display:none;align-items:center;justi
+fy-content:center;z-index:50;padding:16px}
+ .modal-bg.show{display:flex}
+ .modal{background:var(--panel);border:1px solid
+var(--border);border-radius:18px;padding:24px;width:100%;max-width:420px}
+ .modal h3{font-size:17px;margin-bottom:4px}
+ .modal p.muted{color:var(--muted);font-size:13px;margin-bottom:16px} .methods{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+ .method{background:var(--panel2);border:1px solid
+var(--border);border-radius:12px;padding:14px
+8px;text-align:center;cursor:pointer;font-size:12px;color:var(--muted);transition:.2s}
+ .method:hover,.method.active{border-color:var(--accent);color:var(--text)}
+ .method .ic{font-size:24px;margin-bottom:6px}
+ .sandi-box{background:#0a1326;border:1px dashed
+var(--border);border-radius:12px;padding:16px;text-align:center;font-size:34px;letter-spacing:10
+px;font-weight:800;color:var(--accent);margin:12px 0}
+ .finger{width:110px;height:110px;margin:10px auto;border-radius:50%;border:3px solid
+var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;position:relative
+}
+ .finger.scanning{border-color:var(--accent);animation:pulse 1s infinite}
+ .hidden{display:none}
+ .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%)
+translateY(120px);background:var(--panel);border:1px solid var(--border);border-left:4px solid
+var(--accent);padding:13px
+18px;border-radius:12px;font-size:13.5px;z-index:99;transition:.35s;max-width:90vw}
+ .toast.show{transform:translateX(-50%) translateY(0)}
+ .toast.alarm{border-left-color:var(--red)}
+ 
+.stat-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:7
+px 0;border-bottom:1px solid var(--border)}
+ .stat-row b{color:var(--text)}
+ 
+.qr-note{font-size:12px;color:var(--muted);background:var(--panel2);border-radius:10px;padding
+:12px;line-height:1.6}
+</style>
+<base target="_blank">
+</head>
+<body>
+<header>
+ <div class="logo"> </div>
+ <div>
+ <h1>Smart Bike Rack — Sistem Parkir Rak Sepeda/Motor Pintar</h1>
+ <div class="sub">Penguncian berbasis web via QR Code &nbsp;•&nbsp; LED indikator
+status &nbsp;•&nbsp; Sensor + alarm anti-pembukaan paksa</div>
+ </div>
+ <div class="live"><span class="dot-live"></span> Sistem Online &nbsp;|&nbsp; <span
+id="clock"></span></div>
+</header>
+<main>
+ <!-- PANEL KIRI: PETA RAK --> <section class="card">
+ <h2> Peta Rak & LED Indikator Status</h2>
+ <div class="legend">
+ <span><span class="led g"></span> Terbuka / Tersedia</span>
+ <span><span class="led r"></span> Terkunci (dipakai)</span>
+ <span><span class="led y"></span> Sedang digunakan</span>
+ <span><span class="led" style="background:#ef4444;animation:blink .5s infinite"></span>
+⚠ Alarm (pembukaan paksa)</span>
+ </div>
+ <div class="grid" id="rackGrid"></div>
+ <div class="row">
+ <button class="btn ghost" onclick="simulasiPaksa()"> Simulasi Pembukaan
+Paksa</button>
+ <button class="btn danger hidden" id="btnAlarmOff" onclick="matikanAlarm()"> Matikan
+Alarm</button>
+ </div>
+ </section>
+ <!-- PANEL KANAN -->
+ <div class="panel-right">
+ <section class="card">
+ <h2> Status Sistem</h2>
+ <div class="stat-row"><span>Rak tersedia</span><b id="stOpen">-</b></div>
+ <div class="stat-row"><span>Rak terkunci</span><b id="stLocked">-</b></div>
+ <div class="stat-row"><span>Sedang digunakan</span><b id="stBusy">-</b></div>
+ <div class="stat-row"><span>Notifikasi HP</span><b id="stNotif">-</b></div>
+ </section>
+ <section class="card">
+ <h2> Notifikasi & Alarm</h2>
+ <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px">
+ Sistem mengirim dering/notifikasi ke HP ketika rak dibuka, ditutup, atau terjadi upaya
+pembukaan paksa (sensor getar).
+ </p>
+ <button class="btn" onclick="aktifkanNotifikasi()"> Aktifkan Notifikasi HP</button>
+ </section>
+ <section class="card">
+ <h2> Riwayat Aktivitas</h2>
+ <div class="log" id="logList"></div>
+ </section>
+ <section class="card">
+ <h2> Akses via QR Code</h2>
+ <div class="qr-note"> Host file ini di server/web hosting (Netlify, Vercel, GitHub Pages, dll), lalu buat QR Code
+yang mengarah ke URL-nya.
+ Pengguna memindai QR di rak → halaman ini terbuka → pilih rak → kunci/buka dengan
+<b>KTM</b>, <b>sidik jari</b>, atau <b>sandi acak</b>.
+ </div>
+ </section>
+ </div>
+</main>
+<!-- MODAL AKSES RAK -->
+<div class="modal-bg" id="modalBg">
+ <div class="modal">
+ <h3 id="modalTitle">Akses Rak</h3>
+ <p class="muted">Pilih metode penguncian / pembukaan:</p>
+ <div class="methods">
+ <div class="method" onclick="pilihMetode('ktm',this)"><div class="ic"> </div>KTM</div>
+ <div class="method" onclick="pilihMetode('finger',this)"><div class="ic"> </div>Sidik
+Jari</div>
+ <div class="method" onclick="pilihMetode('sandi',this)"><div class="ic"> </div>Sandi
+Acak</div>
+ </div>
+ <div id="mKtm" class="hidden">
+ <label>Nomor KTM / Kartu</label>
+ <input class="field" id="ktmInput" placeholder="Contoh: KTM-2026-0001"
+maxlength="16">
+ </div>
+ <div id="mFinger" class="hidden">
+ <div class="finger" id="fingerPad"> </div>
+ <p style="text-align:center;font-size:12.5px;color:var(--muted)">Tempelkan jari pada
+sensor</p>
+ </div>
+ <div id="mSandi" class="hidden">
+ <label>Sandi acak dari sistem (valid 60 detik)</label>
+ <div class="sandi-box" id="sandiBox">------</div>
+ <button class="btn ghost" onclick="generateSandi()"> Generate Sandi</button>
+ <input class="field" id="sandiInput" placeholder="Ketik sandi di atas" maxlength="6">
+ </div>
+ <div class="row">
+ <button class="btn" id="btnAksi" onclick="prosesAksi()"> Kunci Rak</button>
+ <button class="btn ghost" onclick="tutupModal()">Batal</button>
+ </div> </div>
+</div>
+<div class="toast" id="toast"></div>
+<audio id="beep" preload="auto"></audio>
+<script>
+/* ================= STATE ================= */
+const TOTAL = 12;
+let slots = [];
+let currentSlot = null;
+let metode = null;
+let sandiAktif = null;
+let alarmAktif = false;
+let alarmInterval = null;
+let audioCtx = null;
+for(let i=1;i<=TOTAL;i++){
+ slots.push({id:'R'+i, status:'open', user:null, method:null, time:null});
+}
+/* ================= AUDIO (alarm) ================= */
+function bunyiAlarm(){
+ try{
+ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+ const o = audioCtx.createOscillator();
+ const g = audioCtx.createGain();
+ o.type='square'; o.frequency.value = 880;
+ g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+ o.connect(g); g.connect(audioCtx.destination);
+ o.start(); o.stop(audioCtx.currentTime + 0.25);
+ }catch(e){}
+}
+/* ================= RENDER ================= */
+function render(){
+ const g = document.getElementById('rackGrid');
+ g.innerHTML = '';
+ slots.forEach(s=>{
+ const d = document.createElement('div');
+ d.className = 'slot status-'+s.status;
+ const label = {open:'Terbuka / Tersedia', locked:'Terkunci', busy:'Sedang digunakan',
+alarm:'⚠ ALAM AKTIF'}[s.status];
+ d.innerHTML = ` <span class="tag">${s.method ? 'via '+s.method : ''}</span>
+ <div class="big-led"></div>
+ <div class="name">${s.id}</div>
+ <div class="status">${label}</div>
+ <div style="font-size:11px;color:var(--muted);margin:6px 0 10px">${s.user ? ' '+s.user :
+'&nbsp;'}</div>
+ `;
+ const btn = document.createElement('button');
+ btn.className = 'btn ' + (s.status==='open' ? '' : 'danger');
+ btn.style.width='100%';
+ btn.textContent = s.status==='open' ? ' Kunci / Pakai' :
+(s.status==='locked'||s.status==='busy') ? ' Buka Rak' : ' Alarm!';
+ btn.onclick = ()=>bukaModal(s.id);
+ d.appendChild(btn);
+ g.appendChild(d);
+ });
+ // statistik
+ document.getElementById('stOpen').textContent = slots.filter(s=>s.status==='open').length + '
+rak';
+ document.getElementById('stLocked').textContent =
+slots.filter(s=>s.status==='locked'||s.status==='busy').length + ' rak';
+ document.getElementById('stBusy').textContent = slots.filter(s=>s.status==='busy').length + '
+rak';
+}
+/* ================= LOG ================= */
+function addLog(msg, type=''){
+ const list = document.getElementById('logList');
+ const t = new Date().toLocaleTimeString('id-ID');
+ const item = document.createElement('div');
+ item.className = 'log-item '+type;
+ item.innerHTML = `<b>[${t}]</b> ${msg}`;
+ list.prepend(item);
+}
+/* ================= TOAST ================= */
+function toast(msg, alarm=false){
+ const t = document.getElementById('toast');
+ t.textContent = msg;
+ t.className = 'toast show' + (alarm ? ' alarm' : '');
+ clearTimeout(t._to);
+ t._to = setTimeout(()=>t.classList.remove('show'), 4000);
+}
+/* ================= NOTIFIKASI HP ================= */ async function aktifkanNotifikasi(){
+ if(!('Notification' in window)){ toast('Browser tidak mendukung notifikasi.'); return; }
+ const p = await Notification.requestPermission();
+ if(p==='granted'){
+ document.getElementById('stNotif').textContent = 'Aktif ';
+ toast(' Notifikasi HP aktif! Anda akan menerima dering saat rak dibuka/dibuka paksa.');
+ new Notification('Smart Bike Rack', {body:'Notifikasi berhasil diaktifkan. '});
+ addLog('Notifikasi HP diaktifkan oleh pengguna.','ok');
+ } else {
+ document.getElementById('stNotif').textContent = 'Ditolak ';
+ toast('Izin notifikasi ditolak. Gunakan panel alarm di halaman ini.');
+ }
+}
+function kirimNotif(judul, isi){
+ addLog(` Notifikasi HP → <b>${judul}</b>: ${isi}`,'');
+ if('Notification' in window && Notification.permission==='granted'){
+ new Notification(judul, {body: isi});
+ }
+ toast(' '+judul+': '+isi);
+}
+/* ================= MODAL ================= */
+function bukaModal(id){
+ currentSlot = slots.find(s=>s.id===id);
+ metode = null; sandiAktif = null;
+ document.getElementById('modalTitle').textContent = `Akses ${currentSlot.id}`;
+ ['mKtm','mFinger','mSandi'].forEach(x=>document.getElementById(x).classList.add('hidden'));
+ document.querySelectorAll('.method').forEach(m=>m.classList.remove('active'));
+ document.getElementById('sandiBox').textContent='------';
+ document.getElementById('sandiInput').value='';
+ document.getElementById('ktmInput').value='';
+ const btn = document.getElementById('btnAksi');
+ btn.textContent = currentSlot.status==='open' ? ' Kunci Rak' : ' Buka Rak';
+ document.getElementById('modalBg').classList.add('show');
+}
+function tutupModal(){ document.getElementById('modalBg').classList.remove('show'); }
+function pilihMetode(m, el){
+ metode = m;
+ document.querySelectorAll('.method').forEach(x=>x.classList.remove('active'));
+ el.classList.add('active');
+ ['mKtm','mFinger','mSandi'].forEach(x=>document.getElementById(x).classList.add('hidden'));
+ if(m==='ktm') document.getElementById('mKtm').classList.remove('hidden'); if(m==='finger'){ document.getElementById('mFinger').classList.remove('hidden'); mulaiScan();
+}
+ if(m==='sandi') document.getElementById('mSandi').classList.remove('hidden');
+}
+let fingerOK = false;
+function mulaiScan(){
+ fingerOK = false;
+ const pad = document.getElementById('fingerPad');
+ pad.classList.add('scanning');
+ setTimeout(()=>{
+ pad.classList.remove('scanning');
+ fingerOK = true;
+ toast(' Sidik jari terenali ✓');
+ }, 2000);
+}
+function generateSandi(){
+ sandiAktif = String(Math.floor(100000 + Math.random()*900000));
+ document.getElementById('sandiBox').textContent = sandiAktif.split('').join(' ');
+ addLog(`Sandi acak dibuat untuk ${currentSlot.id}.`,'');
+}
+/* ================= AKSI KUNCI/BUKA ================= */
+function prosesAksi(){
+ if(!metode){ toast(' Pilih metode dulu (KTM / Sidik Jari / Sandi).'); return; }
+ const s = currentSlot;
+ if(metode==='ktm'){
+ const v = document.getElementById('ktmInput').value.trim();
+ if(v.length < 4){ toast(' Nomor KTM tidak valid.'); return; }
+ s.user = v;
+ s.method = 'KTM';
+ } else if(metode==='finger'){
+ if(!fingerOK){ toast(' Sidik jari belum terverifikasi.'); return; }
+ s.user = 'Sidik Jari ✓';
+ s.method = 'Fingerprint';
+ } else if(metode==='sandi'){
+ const v = document.getElementById('sandiInput').value.trim();
+ if(!sandiAktif){ toast(' Generate sandi dulu.'); return; }
+ if(v !== sandiAktif){ toast(' Sandi salah! Percobaan dicatat.'); addLog(`Percobaan sandi
+salah pada ${s.id}.`,'alarm'); return; }
+ s.user = 'Sandi Acak ✓';
+ s.method = 'Sandi';
+ } if(s.status==='open'){
+ s.status = 'busy';
+ render();
+ addLog(`${s.id} <b>dikunci</b> via ${s.method} oleh ${s.user}. LED: kuning (sedang
+digunakan).`,'ok');
+ kirimNotif('Rak Terkunci', `${s.id} berhasil dikunci via ${s.method}.`);
+ setTimeout(()=>{
+ if(s.status==='busy'){
+ s.status='locked';
+ render();
+ addLog(`${s.id} LED: merah (terkunci penuh).`,'ok');
+ }
+ }, 4000);
+ } else {
+ const was = s.method;
+ s.status='open'; s.user=null; s.method=null;
+ render();
+ addLog(`${s.id} <b>dibuka</b> (sebelumnya via ${was}). LED: hijau.`,'ok');
+ kirimNotif('Rak Dibuka', `${s.id} telah dibuka oleh pemilik.`);
+ }
+ tutupModal();
+}
+/* ================= ALARM ================= */
+function simulasiPaksa(){
+ const candidates = slots.filter(s=>s.status==='locked'||s.status==='busy');
+ let s = candidates.length ? candidates[Math.floor(Math.random()*candidates.length)] :
+slots[Math.floor(Math.random()*slots.length)];
+ s.status = 'alarm';
+ alarmAktif = true;
+ render();
+ document.getElementById('btnAlarmOff').classList.remove('hidden');
+ alarmInterval = setInterval(bunyiAlarm, 400);
+ addLog(` SENSOR: upaya pembukaan paksa terdeteksi pada ${s.id}!`,'alarm');
+ kirimNotif(' ALARM!', `Pembukaan paksa pada ${s.id}. Sensor getar + alarm suara aktif!`);
+}
+function matikanAlarm(){
+ alarmAktif = false;
+ clearInterval(alarmInterval);
+ slots.forEach(s=>{ if(s.status==='alarm'){ s.status = s.user ? 'locked':'open'; } });
+ document.getElementById('btnAlarmOff').classList.add('hidden');
+ render();
+ addLog('Alarm dimatikan oleh pengguna. Status rak dikembalikan.','ok'); kirimNotif('Alarm Dimatikan','Sistem kembali normal.');
+}
+/* ================= JAM ================= */
+setInterval(()=>{
+ document.getElementById('clock').textContent = new Date().toLocaleTimeString('id-ID');
+},1000);
+render();
+addLog('Sistem Smart Bike Rack siap digunakan.','ok');
+</script>
+</body>
+</html>
